@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Бункер - Правильная версия</title>
+    <title>Бункер - Официальная версия</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -33,6 +33,7 @@
             background: #4a6b5c;
             color: white;
             font-size: 0.9rem;
+            transition: 0.05s linear;
         }
         button:active { transform: scale(0.97); }
         button.success { background: #3c8c6e; }
@@ -50,19 +51,15 @@
         .player-item {
             background: #2a3a32;
             border-radius: 20px;
-            padding: 10px;
+            padding: 10px 15px;
             margin: 6px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
         }
-        .badge {
-            background: #9b59b6;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-        }
+        .player-name { font-weight: bold; color: #ffeaac; }
+        .player-status { font-size: 0.8rem; color: #8bc48b; }
         .resources-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -123,7 +120,6 @@
             border-radius: 20px;
             margin-left: 8px;
         }
-        .ability-desc { background: #3a2e4a; padding: 8px; border-radius: 16px; font-size: 0.75rem; margin-top: 8px; }
         .hidden-card { text-align: center; padding: 30px; background: #1a2a22; border-radius: 24px; }
         .vote-buttons { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
         .vote-btn { background: #4a3e2e; margin: 0; }
@@ -148,6 +144,7 @@
             cursor: pointer;
         }
         .reveal-option:active { background: #3a5a4a; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -155,7 +152,7 @@
     <!-- Экран входа -->
     <div id="joinScreen" class="card">
         <h1>🏚️ БУНКЕР</h1>
-        <p style="text-align:center; color:#b8d9a8; margin-bottom:15px;">Правильная версия</p>
+        <p style="text-align:center; color:#b8d9a8; margin-bottom:15px;">Классическая версия</p>
         
         <div class="flex" style="margin-bottom:15px;">
             <div class="stepper" style="flex:1">
@@ -178,7 +175,7 @@
             📜 У каждого игрока 11 характеристик<br>
             🎭 В свой ход вы открываете ТОЛЬКО ОДНУ характеристику<br>
             🔒 Остальные остаются скрытыми до следующего хода<br>
-            ⚡ Нельзя врать (если нет способности)
+            👑 Ведущий управляет началом игры и голосованием
         </div>
     </div>
     
@@ -194,7 +191,6 @@
         <div class="card" id="resourcesCard">
             <h2>📦 РЕСУРСЫ БУНКЕРА</h2>
             <div id="resourcesPanel" class="resources-grid"></div>
-            <div id="resourceWarning" class="small-text"></div>
         </div>
         
         <div class="card">
@@ -212,37 +208,50 @@
 </div>
 
 <script>
-    // ============== 11 ХАРАКТЕРИСТИК ==============
+    // ============== БАЗА ДАННЫХ ==============
     const GENDERS = ["Мужчина", "Женщина"];
-    const AGES = Array.from({length: 54}, (_, i) => i + 16);
-    const BODY_TYPES = ["Атлетическое", "Худощавое", "Крепкое", "Хрупкое", "Полное", "Мускулистое"];
-    const PERSONALITY = ["Добрый", "Злой", "Харизматичный", "Замкнутый", "Весёлый", "Серьёзный", "Эгоистичный", "Альтруист", "Пессимист", "Оптимист"];
-    const PROFESSIONS = ["Инженер-ядерщик","Врач-хирург","Военный","Агроном","Электрик","Психолог","Биолог","Шеф-повар","Строитель","Механик","Охотник","Спасатель","Пожарный","Священник","Фермер","Сапёр","Кузнец","Ветеринар","Пилот","Учитель"];
-    const HEALTHS = ["Здоров","Аллергия","Астматик","Диабет","Гипертония","Мигрень","Бессонница","Проблемы со спиной","Сердечная недостаточность","Слабый иммунитет"];
-    const HOBBIES = ["Шахматы","Гитара","Рыбалка","Охота","Кулинария","Садоводство","Походы","Столярка","Рисование","Йога","Медитация","Стрельба","Книги","Астрономия"];
-    const PHOBIAS = ["Клаустрофобия","Акрофобия","Социофобия","Арахнофобия","Никтофобия","Агорафобия","Авиафобия","Гемофобия","Танатофобия","Зоофобия"];
-    const BIG_INVENTORY = ["Автомобиль","Мотоцикл","Генератор","Холодильник","Сейф","Компьютер","Телевизор","Музыкальный центр","Велосипед","Лодка"];
-    const BACKPACK = ["Палатка","Спальник","Аптечка","Нож","Фонарик","Консервы","Вода","Спички","Верёвка","Топор","Радио","Книга","Пистолет","Бинты","Компас"];
-    const EXTRA_INFO = ["Знает языки","Умеет водить танк","Был в тюрьме","Имеет связи","Скрывает прошлое","Был миллионером","Имеет тайник","Знает секрет бункера","Родственник строителя","Был шпионом"];
+    const BODY_TYPES = ["Атлетическое", "Худощавое", "Крепкое", "Хрупкое", "Мускулистое"];
+    const PERSONALITY = ["Добрый", "Харизматичный", "Замкнутый", "Весёлый", "Серьёзный", "Эгоистичный", "Альтруист", "Оптимист", "Спокойный", "Импульсивный"];
+    const PROFESSIONS = ["Инженер", "Врач", "Военный", "Агроном", "Электрик", "Психолог", "Биолог", "Повар", "Строитель", "Механик", "Охотник", "Спасатель", "Пожарный", "Священник", "Фермер", "Сапёр", "Кузнец", "Ветеринар", "Пилот", "Учитель"];
+    const HEALTHS = ["Здоров", "Аллергия", "Астматик", "Диабет", "Гипертония", "Мигрень", "Бессонница", "Проблемы со спиной"];
+    const HOBBIES = ["Шахматы", "Гитара", "Рыбалка", "Охота", "Кулинария", "Садоводство", "Походы", "Столярка", "Рисование", "Йога", "Стрельба", "Книги"];
+    const PHOBIAS = ["Клаустрофобия", "Акрофобия", "Социофобия", "Арахнофобия", "Никтофобия", "Агорафобия", "Гемофобия", "Танатофобия"];
+    const BIG_INVENTORY = ["Автомобиль", "Мотоцикл", "Генератор", "Холодильник", "Сейф", "Компьютер", "Велосипед", "Лодка"];
+    const BACKPACK = ["Палатка", "Спальник", "Аптечка", "Нож", "Фонарик", "Консервы", "Вода", "Спички", "Верёвка", "Топор", "Радио", "Компас"];
+    const EXTRA_INFO = ["Знает языки", "Умеет водить танк", "Был в тюрьме", "Имеет связи", "Скрывает прошлое", "Был миллионером", "Имеет тайник", "Знает секрет бункера"];
     
-    // Спецвозможности (только некоторые профессии)
-    const SPECIAL_ABILITIES = [
-        { name: "Уборщик", ability: "Может выбросить чужой инвентарь" },
-        { name: "Вор", ability: "Может украсть предмет" },
-        { name: "Врач", ability: "Может вылечить болезнь" },
-        { name: "Инженер", ability: "Может починить оборудование" },
-        { name: "Повар", ability: "Может удвоить еду" },
-        { name: "Полицейский", ability: "Может обыскать игрока" },
-        { name: "Священник", ability: "Может узнать тайну" }
+    // Спецвозможности (только для некоторых профессий)
+    const SPECIAL_ABILITIES = {
+        "Уборщик": "Может выбросить чужой инвентарь",
+        "Вор": "Может украсть предмет",
+        "Врач": "Может вылечить болезнь",
+        "Инженер": "Может починить оборудование",
+        "Повар": "Может удвоить еду",
+        "Полицейский": "Может обыскать игрока"
+    };
+    
+    // Список характеристик
+    const CHARACTERISTICS = [
+        { key: "genderAge", label: "ПОЛ, ВОЗРАСТ", icon: "👤" },
+        { key: "bodyType", label: "ТЕЛОСЛОЖЕНИЕ", icon: "💪" },
+        { key: "personality", label: "ХАРАКТЕР", icon: "🧠" },
+        { key: "profession", label: "ПРОФЕССИЯ", icon: "🔧" },
+        { key: "health", label: "ЗДОРОВЬЕ", icon: "❤️" },
+        { key: "hobby", label: "ХОББИ", icon: "⭐" },
+        { key: "phobia", label: "ФОБИЯ", icon: "😨" },
+        { key: "bigInventory", label: "КРУПНЫЙ ИНВЕНТАРЬ", icon: "🚗" },
+        { key: "backpack", label: "РЮКЗАК", icon: "🎒" },
+        { key: "extraInfo", label: "ДОП. СВЕДЕНИЕ", icon: "📜" },
+        { key: "specialAbility", label: "СПЕЦВОЗМОЖНОСТЬ", icon: "✨" }
     ];
     
     function generateCard() {
         const gender = GENDERS[Math.floor(Math.random() * GENDERS.length)];
-        const age = AGES[Math.floor(Math.random() * AGES.length)];
+        const age = Math.floor(Math.random() * 54) + 16;
         const profession = PROFESSIONS[Math.floor(Math.random() * PROFESSIONS.length)];
-        const specialAbility = SPECIAL_ABILITIES.find(s => s.name === profession)?.ability || "Нет специальных возможностей";
+        const specialAbility = SPECIAL_ABILITIES[profession] || "Нет специальных возможностей";
         
-        return {
+        const card = {
             genderAge: `${gender}, ${age} лет`,
             bodyType: BODY_TYPES[Math.floor(Math.random() * BODY_TYPES.length)],
             personality: PERSONALITY[Math.floor(Math.random() * PERSONALITY.length)],
@@ -253,40 +262,16 @@
             bigInventory: BIG_INVENTORY[Math.floor(Math.random() * BIG_INVENTORY.length)],
             backpack: BACKPACK[Math.floor(Math.random() * BACKPACK.length)],
             extraInfo: EXTRA_INFO[Math.floor(Math.random() * EXTRA_INFO.length)],
-            specialAbility: specialAbility,
-            // Для отслеживания, что уже раскрыто
-            revealed: {
-                genderAge: false,
-                bodyType: false,
-                personality: false,
-                profession: false,
-                health: false,
-                hobby: false,
-                phobia: false,
-                bigInventory: false,
-                backpack: false,
-                extraInfo: false,
-                specialAbility: false
-            }
+            specialAbility: specialAbility
         };
+        
+        // Инициализация раскрытых характеристик
+        const revealed = {};
+        for (let c of CHARACTERISTICS) revealed[c.key] = false;
+        
+        return { card, revealed };
     }
     
-    // Список характеристик для отображения
-    const CHARACTERISTICS = [
-        { key: "genderAge", label: "👤 ПОЛ, ВОЗРАСТ", icon: "👤" },
-        { key: "bodyType", label: "💪 ТЕЛОСЛОЖЕНИЕ", icon: "💪" },
-        { key: "personality", label: "🧠 ЧЕРТА ХАРАКТЕРА", icon: "🧠" },
-        { key: "profession", label: "🔧 ПРОФЕССИЯ", icon: "🔧" },
-        { key: "health", label: "❤️ ЗДОРОВЬЕ", icon: "❤️" },
-        { key: "hobby", label: "⭐ ХОББИ", icon: "⭐" },
-        { key: "phobia", label: "😨 ФОБИЯ", icon: "😨" },
-        { key: "bigInventory", label: "🚗 КРУПНЫЙ ИНВЕНТАРЬ", icon: "🚗" },
-        { key: "backpack", label: "🎒 РЮКЗАК", icon: "🎒" },
-        { key: "extraInfo", label: "📜 ДОП. СВЕДЕНИЕ", icon: "📜" },
-        { key: "specialAbility", label: "✨ СПЕЦВОЗМОЖНОСТИ", icon: "✨" }
-    ];
-    
-    // Ресурсы бункера
     function generateResources() {
         return {
             beds: Math.floor(Math.random() * 8) + 3,
@@ -296,31 +281,68 @@
         };
     }
     
-    // ============== СИНХРОНИЗАЦИЯ ==============
-    let roomId = null, playerId = null, playerName = null, isHost = false, syncInterval = null, gameState = null;
+    // ============== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==============
+    let roomId = null;
+    let playerId = null;
+    let playerName = null;
+    let isHost = false;
+    let syncInterval = null;
+    let gameState = null;
     let targetPlayerCount = 4;
     
-    function generateId() { return Date.now() + '_' + Math.random().toString(36).substr(2, 8); }
+    // ============== ФУНКЦИИ СИНХРОНИЗАЦИИ ==============
+    function generateId() {
+        return Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+    }
     
     function saveGameState() {
         if (!roomId || !gameState) return;
-        localStorage.setItem(`bunker_${roomId}`, JSON.stringify(gameState));
+        const key = `bunker_${roomId}`;
+        const toSave = {
+            players: gameState.players.map(p => ({
+                id: p.id,
+                name: p.name,
+                is_host: p.is_host,
+                number: p.number,
+                eliminated: p.eliminated,
+                revealed: p.revealed,
+                voted: p.voted,
+                card: p.card,
+                revealedChars: p.revealedChars
+            })),
+            phase: gameState.phase,
+            currentTurn: gameState.currentTurn,
+            situation: gameState.situation,
+            bunker: gameState.bunker,
+            resources: gameState.resources,
+            votes: gameState.votes,
+            maxPlayers: gameState.maxPlayers
+        };
+        localStorage.setItem(key, JSON.stringify(toSave));
+        
         if (window.BroadcastChannel) {
             const channel = new BroadcastChannel(`bunker_${roomId}`);
-            channel.postMessage({ type: 'update', state: gameState });
+            channel.postMessage({ type: 'update', state: toSave });
             setTimeout(() => channel.close(), 100);
         }
     }
     
     function loadGameState() {
         if (!roomId) return null;
-        const saved = localStorage.getItem(`bunker_${roomId}`);
-        return saved ? JSON.parse(saved) : null;
+        const key = `bunker_${roomId}`;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch(e) {}
+        }
+        return null;
     }
     
     function initGameState() {
-        const situations = ["Ядерная зима","Зомби-апокалипсис","Падение астероида","Эпидемия","ИИ восстал","Солнечная вспышка","Наводнение","Радиация","Гражданская война"];
-        const bunkers = ["Военный бункер","Научный комплекс","Заброшенная шахта","Секретная база","Био-купол","Арктическая станция","Бункер миллиардера","Подводная лодка"];
+        const situations = ["Ядерная зима", "Зомби-апокалипсис", "Падение астероида", "Эпидемия", "ИИ восстал", "Солнечная вспышка", "Наводнение", "Радиация", "Гражданская война"];
+        const bunkers = ["Военный бункер", "Научный комплекс", "Заброшенная шахта", "Секретная база", "Био-купол", "Арктическая станция", "Бункер миллиардера", "Подводная лодка"];
+        
         return {
             players: [],
             phase: "waiting",
@@ -335,35 +357,48 @@
     
     function updatePlayer() {
         if (!gameState) return;
-        const idx = gameState.players.findIndex(p => p.id === playerId);
-        const data = {
-            id: playerId,
-            name: playerName,
-            is_host: isHost,
-            card: generateCard(),
-            revealed: false,
-            eliminated: false,
-            voted: false,
-            number: idx !== -1 ? gameState.players[idx].number : gameState.players.length + 1
-        };
-        if (idx !== -1 && gameState.players[idx].card) {
-            data.card = gameState.players[idx].card;
+        
+        const existingIndex = gameState.players.findIndex(p => p.id === playerId);
+        const newCard = generateCard();
+        
+        if (existingIndex === -1) {
+            if (gameState.players.length >= gameState.maxPlayers) {
+                alert("Комната заполнена!");
+                return;
+            }
+            gameState.players.push({
+                id: playerId,
+                name: playerName,
+                is_host: isHost,
+                number: gameState.players.length + 1,
+                eliminated: false,
+                revealed: false,
+                voted: false,
+                card: newCard.card,
+                revealedChars: newCard.revealed
+            });
         }
-        if (idx !== -1) gameState.players[idx] = data;
-        else if (gameState.players.length < gameState.maxPlayers) gameState.players.push(data);
         saveGameState();
     }
     
-    function renderUI() {
+    // ============== ОТОБРАЖЕНИЕ ==============
+    function escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    }
+    
+    function renderGame() {
         if (!gameState) return;
         
+        // Обновляем счётчики
         document.getElementById("currentPlayersCount").innerText = gameState.players.length;
         document.getElementById("maxPlayersCount").innerText = gameState.maxPlayers;
         
+        // Список игроков (без лишней информации)
         const playersHtml = gameState.players.map(p => `
             <div class="player-item">
-                <span><b>🎮 Игрок ${p.number}:</b> ${escapeHtml(p.name)} ${p.is_host ? '👑' : ''}</span>
-                <span>${p.revealed ? '🔓' : '🔒'} ${p.eliminated ? '❌' : ''}</span>
+                <span class="player-name">🎮 Игрок ${p.number}: ${escapeHtml(p.name)} ${p.is_host ? '👑' : ''}</span>
+                <span class="player-status">${p.eliminated ? '❌ ВЫБЫЛ' : (p.revealed ? '✅ все раскрыто' : '🔒 в игре')}</span>
             </div>
         `).join("");
         document.getElementById("playersList").innerHTML = playersHtml || "<div>Нет игроков</div>";
@@ -379,39 +414,45 @@
             `;
         }
         
-        const current = gameState.players.find(p => p.id === playerId);
-        const active = gameState.players.filter(p => !p.eliminated);
+        const currentPlayer = gameState.players.find(p => p.id === playerId);
+        const activePlayers = gameState.players.filter(p => !p.eliminated);
         const turnPlayer = gameState.players[gameState.currentTurn];
         
         // Фаза игры
         if (gameState.phase === "waiting") {
             document.getElementById("phaseDisplay").innerHTML = `⏳ ОЖИДАНИЕ (${gameState.players.length}/${gameState.maxPlayers})`;
             document.getElementById("gameInfo").innerHTML = "";
+            document.getElementById("actionArea").innerHTML = "";
+            
             if (isHost && gameState.players.length === gameState.maxPlayers) {
                 document.getElementById("hostArea").innerHTML = `<button id="startBtn" class="success">🚀 НАЧАТЬ ИГРУ</button>`;
-                document.getElementById("startBtn")?.addEventListener("click", () => {
+                const startBtn = document.getElementById("startBtn");
+                if (startBtn) startBtn.onclick = () => {
                     gameState.phase = "revealing";
                     gameState.currentTurn = 0;
                     gameState.votes = {};
-                    gameState.players.forEach(p => { p.revealed = false; p.voted = false; });
+                    gameState.players.forEach(p => {
+                        p.revealed = false;
+                        p.voted = false;
+                    });
                     saveGameState();
-                    renderUI();
-                });
-            } else document.getElementById("hostArea").innerHTML = "";
-            document.getElementById("actionArea").innerHTML = "";
+                    renderGame();
+                };
+            } else {
+                document.getElementById("hostArea").innerHTML = "";
+            }
         }
         else if (gameState.phase === "revealing") {
-            document.getElementById("phaseDisplay").innerHTML = `<div class="current-turn">🎭 СЕЙЧАС ХОДИТ: Игрок ${turnPlayer?.number} (${turnPlayer?.name})</div>`;
+            document.getElementById("phaseDisplay").innerHTML = `<div class="current-turn">🎭 ХОДИТ: Игрок ${turnPlayer?.number} (${turnPlayer?.name})</div>`;
             document.getElementById("gameInfo").innerHTML = `<div style="margin-top:8px;">🌍 ${gameState.situation}<br>🏚️ ${gameState.bunker}</div>`;
             
-            // Если это ход текущего игрока и он не выбыл
-            if (current && !current.eliminated && turnPlayer?.id === playerId && !current.revealed) {
-                // Подсчёт сколько характеристик уже раскрыто
-                const revealedCount = Object.values(current.card.revealed).filter(v => v === true).length;
+            // Если ход текущего игрока
+            if (currentPlayer && !currentPlayer.eliminated && turnPlayer?.id === playerId && !currentPlayer.revealed) {
+                const revealedCount = Object.values(currentPlayer.revealedChars || {}).filter(v => v === true).length;
                 
-                if (revealedCount >= 11) {
+                if (revealedCount >= CHARACTERISTICS.length) {
                     // Все характеристики раскрыты
-                    current.revealed = true;
+                    currentPlayer.revealed = true;
                     let next = gameState.currentTurn + 1;
                     while (next < gameState.players.length && (gameState.players[next].eliminated)) next++;
                     if (next >= gameState.players.length) {
@@ -422,10 +463,9 @@
                         gameState.currentTurn = next;
                     }
                     saveGameState();
-                    renderUI();
+                    renderGame();
                 } else {
-                    // Показываем кнопки для выбора характеристики
-                    const notRevealed = CHARACTERISTICS.filter(c => !current.card.revealed[c.key]);
+                    const notRevealed = CHARACTERISTICS.filter(c => !currentPlayer.revealedChars[c.key]);
                     let optionsHtml = `<div style="margin-top:12px;"><strong>📜 Выберите характеристику для раскрытия:</strong></div><div class="reveal-options">`;
                     notRevealed.forEach(c => {
                         optionsHtml += `<div class="reveal-option" data-key="${c.key}">${c.icon} ${c.label}</div>`;
@@ -436,13 +476,11 @@
                     document.querySelectorAll(".reveal-option").forEach(btn => {
                         btn.onclick = () => {
                             const key = btn.dataset.key;
-                            current.card.revealed[key] = true;
+                            currentPlayer.revealedChars[key] = true;
                             
-                            // Переход к следующему игроку
                             let next = gameState.currentTurn + 1;
                             while (next < gameState.players.length && (gameState.players[next].eliminated)) next++;
                             if (next >= gameState.players.length) {
-                                // Все игроки сделали ход, начинаем голосование
                                 gameState.phase = "voting";
                                 gameState.votes = {};
                                 gameState.players.forEach(p => { if (!p.eliminated) p.voted = false; });
@@ -450,14 +488,12 @@
                                 gameState.currentTurn = next;
                             }
                             saveGameState();
-                            renderUI();
+                            renderGame();
                         };
                     });
                 }
-            } else if (current?.revealed) {
-                document.getElementById("actionArea").innerHTML = `<div style="text-align:center; color:#8bc48b;">✅ Вы уже раскрыли все характеристики</div>`;
-            } else if (turnPlayer?.id !== playerId) {
-                document.getElementById("actionArea").innerHTML = `<div style="text-align:center; color:#aa8866;">⏳ Ожидайте свой ход</div>`;
+            } else {
+                document.getElementById("actionArea").innerHTML = currentPlayer?.revealed ? "<div>✅ Вы раскрыли все характеристики</div>" : "<div>⏳ Ожидайте свой ход</div>";
             }
             document.getElementById("hostArea").innerHTML = "";
         }
@@ -465,18 +501,19 @@
             document.getElementById("phaseDisplay").innerHTML = `🗳️ ГОЛОСОВАНИЕ`;
             document.getElementById("gameInfo").innerHTML = `<div style="text-align:center;">Выберите, кто НЕ попадёт в бункер</div>`;
             
-            if (current && !current.eliminated && !current.voted) {
-                const btns = active.filter(p => p.id !== playerId).map(p => 
+            if (currentPlayer && !currentPlayer.eliminated && !currentPlayer.voted) {
+                const voteBtns = activePlayers.filter(p => p.id !== playerId).map(p => 
                     `<button class="vote-btn" onclick="voteFor('${p.id}')">🗳️ Игрок ${p.number}: ${escapeHtml(p.name)}</button>`
                 ).join("");
-                document.getElementById("actionArea").innerHTML = `<div class="vote-buttons">${btns}</div>`;
+                document.getElementById("actionArea").innerHTML = `<div class="vote-buttons">${voteBtns}</div>`;
             } else {
-                document.getElementById("actionArea").innerHTML = current?.voted ? "<div>✅ Вы проголосовали</div>" : "<div>⏳ Ожидание</div>";
+                document.getElementById("actionArea").innerHTML = currentPlayer?.voted ? "<div>✅ Вы проголосовали</div>" : "<div>⏳ Ожидание</div>";
             }
             
-            if (isHost && Object.keys(gameState.votes).length === active.length && active.length > 0) {
+            if (isHost && Object.keys(gameState.votes).length === activePlayers.length && activePlayers.length > 0) {
                 document.getElementById("hostArea").innerHTML = `<button id="resolveBtn" class="danger">⚡ ЗАВЕРШИТЬ ГОЛОСОВАНИЕ</button>`;
-                document.getElementById("resolveBtn")?.addEventListener("click", resolveVote);
+                const resolveBtn = document.getElementById("resolveBtn");
+                if (resolveBtn) resolveBtn.onclick = resolveVote;
             } else {
                 document.getElementById("hostArea").innerHTML = "";
             }
@@ -487,16 +524,17 @@
             document.getElementById("gameInfo").innerHTML = `<div class="winner">Победитель: ${winner ? escapeHtml(winner.name) : "?"}<br><button id="newGameBtn" class="success">🔄 НОВАЯ ИГРА</button></div>`;
             document.getElementById("actionArea").innerHTML = "";
             document.getElementById("hostArea").innerHTML = "";
-            document.getElementById("newGameBtn")?.addEventListener("click", resetGame);
+            const newGameBtn = document.getElementById("newGameBtn");
+            if (newGameBtn) newGameBtn.onclick = resetGame;
         }
         
-        // Отображение СВОЕЙ карты (только для владельца!)
+        // Отображение СВОЕЙ карты
         const myCardDiv = document.getElementById("myCardArea");
-        if (current?.card) {
+        if (currentPlayer && currentPlayer.card) {
             let html = `<div class="my-card">`;
             for (let c of CHARACTERISTICS) {
-                const isRevealed = current.card.revealed[c.key];
-                const value = current.card[c.key];
+                const isRevealed = currentPlayer.revealedChars?.[c.key] || false;
+                const value = currentPlayer.card[c.key];
                 html += `
                     <div class="card-field">
                         <div class="card-label">${c.icon} ${c.label}</div>
@@ -520,98 +558,134 @@
         gameState.votes[playerId] = votedId;
         p.voted = true;
         saveGameState();
-        renderUI();
+        renderGame();
     };
     
     function resolveVote() {
         if (!isHost) return;
-        const votes = {};
-        for (let [, vid] of Object.entries(gameState.votes)) votes[vid] = (votes[vid] || 0) + 1;
-        let max = 0, eliminated = null;
-        for (let [id, c] of Object.entries(votes)) if (c > max) { max = c; eliminated = id; }
-        const out = gameState.players.find(p => p.id === eliminated);
-        if (out) {
-            out.eliminated = true;
-            alert(`🚫 Игрок ${out.number} (${out.name}) выбывает!`);
+        
+        const voteCount = {};
+        for (let [, votedId] of Object.entries(gameState.votes)) {
+            voteCount[votedId] = (voteCount[votedId] || 0) + 1;
+        }
+        
+        let maxVotes = 0;
+        let eliminatedId = null;
+        for (let [id, count] of Object.entries(voteCount)) {
+            if (count > maxVotes) {
+                maxVotes = count;
+                eliminatedId = id;
+            }
+        }
+        
+        const eliminated = gameState.players.find(p => p.id === eliminatedId);
+        if (eliminated) {
+            eliminated.eliminated = true;
+            alert(`🚫 Игрок ${eliminated.number} (${eliminated.name}) выбывает!`);
         }
         
         const active = gameState.players.filter(p => !p.eliminated);
+        
         if (active.length <= 2) {
             gameState.phase = "game_over";
         } else {
+            const situations = ["Ядерная зима", "Зомби-апокалипсис", "Падение астероида", "Эпидемия", "ИИ восстал", "Солнечная вспышка", "Наводнение", "Радиация"];
+            const bunkers = ["Военный бункер", "Научный комплекс", "Заброшенная шахта", "Секретная база", "Био-купол", "Арктическая станция"];
+            
             gameState.phase = "revealing";
             gameState.currentTurn = 0;
             gameState.votes = {};
-            gameState.resources = generateResources();
-            const situations = ["Ядерная зима","Зомби-апокалипсис","Падение астероида","Эпидемия","ИИ восстал","Солнечная вспышка","Наводнение","Радиация"];
-            const bunkers = ["Военный бункер","Научный комплекс","Заброшенная шахта","Секретная база","Био-купол","Арктическая станция"];
             gameState.situation = situations[Math.floor(Math.random() * situations.length)];
             gameState.bunker = bunkers[Math.floor(Math.random() * bunkers.length)];
-            // Сбрасываем флаги раскрытия у выживших, но карты остаются те же
+            gameState.resources = generateResources();
+            
             gameState.players.forEach(p => {
                 if (!p.eliminated) {
                     p.revealed = false;
                     p.voted = false;
-                    // Сбрасываем раскрытые характеристики, но карта остаётся
-                    if (p.card) {
+                    if (p.revealedChars) {
                         for (let key of CHARACTERISTICS.map(c => c.key)) {
-                            p.card.revealed[key] = false;
+                            p.revealedChars[key] = false;
                         }
                     }
                 }
             });
-            // Пропускаем выбывших
+            
             while (gameState.currentTurn < gameState.players.length && gameState.players[gameState.currentTurn].eliminated) {
                 gameState.currentTurn++;
             }
         }
         saveGameState();
-        renderUI();
+        renderGame();
     }
     
     function resetGame() {
         if (!isHost) return;
-        const situations = ["Ядерная зима","Зомби-апокалипсис","Падение астероида","Эпидемия","ИИ восстал","Солнечная вспышка","Наводнение","Радиация"];
-        const bunkers = ["Военный бункер","Научный комплекс","Заброшенная шахта","Секретная база","Био-купол","Арктическая станция"];
-        gameState.players.forEach(p => {
+        
+        const situations = ["Ядерная зима", "Зомби-апокалипсис", "Падение астероида", "Эпидемия", "ИИ восстал", "Солнечная вспышка", "Наводнение", "Радиация"];
+        const bunkers = ["Военный бункер", "Научный комплекс", "Заброшенная шахта", "Секретная база", "Био-купол", "Арктическая станция"];
+        
+        for (let p of gameState.players) {
+            const newCard = generateCard();
             p.eliminated = false;
-            p.voted = false;
             p.revealed = false;
-            p.card = generateCard();
-        });
+            p.voted = false;
+            p.card = newCard.card;
+            p.revealedChars = newCard.revealed;
+        }
+        
         gameState.phase = "waiting";
         gameState.currentTurn = 0;
         gameState.situation = situations[Math.floor(Math.random() * situations.length)];
         gameState.bunker = bunkers[Math.floor(Math.random() * bunkers.length)];
         gameState.resources = generateResources();
         gameState.votes = {};
+        
         saveGameState();
-        renderUI();
+        renderGame();
     }
-    
-    function escapeHtml(s) { if (!s) return ""; return s.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
     
     function startSync() {
         if (syncInterval) clearInterval(syncInterval);
+        
         const saved = loadGameState();
-        gameState = saved ? saved : initGameState();
-        updatePlayer();
-        if (window.BroadcastChannel) {
-            const ch = new BroadcastChannel(`bunker_${roomId}`);
-            ch.onmessage = (e) => { if (e.data.type === 'update') { gameState = e.data.state; saveGameState(); renderUI(); } };
+        if (saved) {
+            gameState = saved;
+        } else {
+            gameState = initGameState();
         }
+        
+        updatePlayer();
+        
+        if (window.BroadcastChannel) {
+            const channel = new BroadcastChannel(`bunker_${roomId}`);
+            channel.onmessage = (event) => {
+                if (event.data.type === 'update') {
+                    gameState = event.data.state;
+                    saveGameState();
+                    renderGame();
+                }
+            };
+        }
+        
         syncInterval = setInterval(() => {
-            const s = loadGameState();
-            if (s && JSON.stringify(s) !== JSON.stringify(gameState)) { gameState = s; renderUI(); }
+            const saved = loadGameState();
+            if (saved && JSON.stringify(saved) !== JSON.stringify(gameState)) {
+                gameState = saved;
+                renderGame();
+            }
             updatePlayer();
         }, 2000);
-        renderUI();
+        
+        renderGame();
     }
     
+    // ============== СОЗДАНИЕ / ПРИСОЕДИНЕНИЕ ==============
     function createRoom() {
         const name = document.getElementById("playerNameInput").value.trim();
         let room = document.getElementById("roomIdInput").value.trim();
-        if (!name) { alert("Введите имя"); return; }
+        
+        if (!name) { alert("Введите ваше имя"); return; }
         if (!room) room = Math.floor(100000 + Math.random() * 900000).toString();
         
         targetPlayerCount = parseInt(document.getElementById("targetPlayersCount").innerText);
@@ -624,14 +698,17 @@
         document.getElementById("joinScreen").style.display = "none";
         document.getElementById("gameScreen").style.display = "block";
         document.getElementById("hostBadge").style.display = "inline-block";
+        
         startSync();
     }
     
     function joinRoom() {
         const name = document.getElementById("playerNameInput").value.trim();
         const room = document.getElementById("roomIdInput").value.trim();
-        if (!name) { alert("Введите имя"); return; }
+        
+        if (!name) { alert("Введите ваше имя"); return; }
         if (!room) { alert("Введите код комнаты"); return; }
+        
         roomId = room;
         playerName = name;
         playerId = generateId();
@@ -641,14 +718,31 @@
         document.getElementById("joinScreen").style.display = "none";
         document.getElementById("gameScreen").style.display = "block";
         document.getElementById("hostBadge").style.display = "none";
+        
         startSync();
     }
     
-    document.getElementById("decPlayers").onclick = () => { let v = parseInt(document.getElementById("targetPlayersCount").innerText); if (v > 2) v--; document.getElementById("targetPlayersCount").innerText = v; };
-    document.getElementById("incPlayers").onclick = () => { let v = parseInt(document.getElementById("targetPlayersCount").innerText); if (v < 10) v++; document.getElementById("targetPlayersCount").innerText = v; };
+    // ============== ИНИЦИАЛИЗАЦИЯ ==============
+    document.getElementById("decPlayers").onclick = () => {
+        let v = parseInt(document.getElementById("targetPlayersCount").innerText);
+        if (v > 2) v--;
+        document.getElementById("targetPlayersCount").innerText = v;
+        targetPlayerCount = v;
+    };
+    
+    document.getElementById("incPlayers").onclick = () => {
+        let v = parseInt(document.getElementById("targetPlayersCount").innerText);
+        if (v < 10) v++;
+        document.getElementById("targetPlayersCount").innerText = v;
+        targetPlayerCount = v;
+    };
+    
     document.getElementById("createRoomBtn").onclick = createRoom;
     document.getElementById("joinRoomBtn").onclick = joinRoom;
-    window.onbeforeunload = () => { if (syncInterval) clearInterval(syncInterval); };
+    
+    window.onbeforeunload = () => {
+        if (syncInterval) clearInterval(syncInterval);
+    };
 </script>
 </body>
 </html>
