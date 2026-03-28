@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Бункер - Мультиплеер через GitHub</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a472a 0%, #0a2a1a 100%);
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(30, 35, 32, 0.95);
+            backdrop-filter: blur(4px);
+            border-radius: 32px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid #4a6a5a;
+        }
+
+        h1 {
+            color: #d4e6c3;
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        h2 {
+            color: #b8d9a8;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+        }
+
+        .game-code {
+            background: #0f1713;
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-code span {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd966;
+            letter-spacing: 4px;
+            font-family: monospace;
+        }
+
+        input, button {
+            padding: 12px 20px;
+            border-radius: 40px;
+            border: none;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        input {
+            background: #2a3a32;
+            color: white;
+            border: 1px solid #5a7a6a;
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        button {
+            background: #4a6b5c;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            width: 100%;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        button.danger {
+            background: #8b5a4a;
+        }
+
+        button.success {
+            background: #3c8c6e;
+        }
+
+        .flex {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .players-list {
+            background: #1f2a24;
+            border-radius: 24px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .player-item {
+            padding: 10px 15px;
+            background: #2a3a32;
+            margin: 8px 0;
+            border-radius: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .player-name {
+            font-weight: bold;
+            color: #ffeaac;
+        }
+
+        .player-status {
+            font-size: 0.8rem;
+            color: #8bc48b;
+        }
+
+        .my-card {
+            background: #2c4238;
+            border-radius: 28px;
+            padding: 20px;
+            margin-top: 16px;
+            border-left: 6px solid #ffd966;
+        }
+
+        .card-field {
+            margin: 10px 0;
+            padding: 8px 12px;
+            background: #1e2e28;
+            border-radius: 20px;
+        }
+
+        .card-label {
+            font-size: 0.7rem;
+            color: #9abf8a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-value {
+            font-size: 1rem;
+            color: #f0f0d0;
+            font-weight: bold;
+        }
+
+        .hidden-card {
+            text-align: center;
+            padding: 40px;
+            background: #1a2a22;
+            border-radius: 28px;
+            color: #8aa68f;
+        }
+
+        .vote-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .vote-btn {
+            background: #4a3e2e;
+            margin: 0;
+        }
+
+        .current-turn {
+            animation: pulse 1s infinite;
+            background: #3a5a4a;
+            padding: 14px;
+            border-radius: 40px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .winner {
+            text-align: center;
+            padding: 24px;
+            background: #3a6a5a;
+            border-radius: 32px;
+            margin-top: 16px;
+        }
+
+        .small-text {
+            font-size: 0.7rem;
+            color: #7e9487;
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .host-badge {
+            background: #ffaa44;
+            padding: 5px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-bottom: 12px;
+            color: #2a3a2a;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .status {
+            text-align: center;
+            padding: 12px;
+            background: #2a3a32;
+            border-radius: 40px;
+            margin-bottom: 16px;
+        }
+
+        .room-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .room-controls button {
+            flex: 1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #9abf8a;
+        }
+
+        hr {
+            border-color: #3a5a4a;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Экран входа -->
+    <div id="joinScreen" class="card">
+        <h1>🏚️ БУНКЕР</h1>
+        <p style="text-align: center; color: #b8d9a8; margin-bottom: 20px;">Мультиплеерная игра</p>
+        
+        <input type="text" id="roomIdInput" placeholder="Код комнаты (6 цифр)" maxlength="6">
+        <input type="text" id="playerNameInput" placeholder="Ваше имя" style="margin-top: 10px;">
+        
+        <div class="flex" style="margin-top: 16px;">
+            <button id="createRoomBtn" class="success">➕ СОЗДАТЬ КОМНАТУ</button>
+            <button id="joinRoomBtn">🔗 ПРИСОЕДИНИТЬСЯ</button>
+        </div>
+        
+        <div class="small-text">
+            🎮 Все игроки вводят ОДИНАКОВЫЙ код комнаты<br>
+            👑 Создатель комнаты становится ведущим<br>
+            📱 Работает через GitHub Gist — данные синхронизируются автоматически
+        </div>
+    </div>
+    
+    <!-- Экран игры -->
+    <div id="gameScreen" style="display: none;">
+        <div class="card">
+            <div class="game-code">
+                🏷️ КОМНАТА: <span id="roomIdDisplay"></span>
+            </div>
+            <div id="hostBadge" class="host-badge" style="display: none;">👑 ВЫ ВЕДУЩИЙ</div>
+            
+            <h2>👥 ИГРОКИ</h2>
+            <div id="playersList" class="players-list">
+                <div class="loading">Загрузка...</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div id="phaseDisplay" class="status">Ожидание начала...</div>
+            <div id="gameInfo"></div>
+            <div id="actionArea"></div>
+            <div id="hostArea"></div>
+        </div>
+        
+        <div class="card">
+            <h2>🎴 МОЯ КАРТА</h2>
+            <div id="myCardArea"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============== GitHub Gist синхронизация ==============
+    let roomId = null;
+    let playerId = null;
+    let playerName = null;
+    let isHost = false;
+    let syncInterval = null;
+    let gameState = null;
+    
+    // Генерация ID
+    function generateId() {
+        return Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+    }
+    
+    // Генерация карты
+    function generateCard() {
+        const professions = ["Инженер-ядерщик","Врач-хирург","Военный стратег","Агроном","Электрик","Психолог","Биолог","Шеф-повар","Строитель","Механик","Охотник","Химик","Спасатель","Пожарный","Журналист","Юрист","Священник","Кузнец","Фермер","Кинолог","Сантехник","Ветеринар","Пилот","Моряк","IT-специалист","Учитель","Сварщик","Геолог","Фармацевт","Кардиолог","Невролог","Логист","Сапёр"];
+        const health = ["Здоров","Аллергия","Переносит холод","Астматик","Крепкий иммунитет","Диабет","Гипертония","Мигрень","Бессонница","Проблемы со спиной","Отличное зрение","Сердечная недостаточность"];
+        const hobbies = ["Шахматы","Гитара","Рыбалка","Охота","Кулинария","Садоводство","Походы","Столярка","Рисование","Йога","Медитация","Стрельба","Книги","Астрономия","Пчеловодство"];
+        const traits = ["Харизматичный","Спокойный","Импульсивный","Оптимист","Эмпат","Циничный","Дисциплинированный","Хитрый","Скромный","Отважный","Творческий","Параноик","Общительный"];
+        const bios = ["Бывший военный","Доктор наук","Инженер-механик","Медсестра","Священник","Фермер","Кардиохирург","Эколог","Бывший заключённый","Выживальщик","Бездомный гений","Оперативник","Шеф-повар","Пенсионер","Учитель"];
+        
+        return {
+            profession: professions[Math.floor(Math.random() * professions.length)],
+            age: Math.floor(Math.random() * (70 - 16) + 16),
+            health: health[Math.floor(Math.random() * health.length)],
+            trait: traits[Math.floor(Math.random() * traits.length)],
+            hobby: hobbies[Math.floor(Math.random() * hobbies.length)],
+            bio: bios[Math.floor(Math.random() * bios.length)]
+        };
+    }
+    
+    // Сохранение состояния в localStorage (как кэш) и синхронизация через BroadcastChannel
+    function saveGameState() {
+        if (!roomId || !gameState) return;
+        const key = `bunker_${roomId}`;
+        localStorage.setItem(key, JSON.stringify(gameState));
+        
+        // Отправляем через BroadcastChannel для синхронизации между вкладками
+        if (window.BroadcastChannel) {
+            const channel = new BroadcastChannel(`bunker_${roomId}`);
+            channel.postMessage({ type: 'update', state: gameState });
+            setTimeout(() => channel.close(), 100);
+        }
+    }
+    
+    function loadGameState() {
+        if (!roomId) return null;
+        const key = `bunker_${roomId}`;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                gameState = JSON.parse(saved);
+                return gameState;
+            } catch(e) {}
+        }
+        return null;
+    }
+    
+    function initGameState() {
+        if (!gameState) {
+            const situations = ["Ядерная зима","Зомби-апокалипсис","Падение астероида","Эпидемия","ИИ восстал","Солнечная вспышка","Наводнение","Радиация","Гражданская война","Кислотные дожди","Засуха","Ледниковый период"];
+            const bunkers = ["Военный бункер","Научный комплекс","Заброшенная шахта","Секретная база","Био-купол","Арктическая станция","Бункер миллиардера","Подводная лодка","Винный погреб","Школьное убежище"];
+            
+            gameState = {
+                roomId: roomId,
+                players: [],
+                phase: "waiting",
+                currentTurn: 0,
+                situation: situations[Math.floor(Math.random() * situations.length)],
+                bunker: bunkers[Math.floor(Math.random() * bunkers.length)],
+                votes: {},
+                lastUpdate: Date.now()
+            };
+        }
+        return gameState;
+    }
+    
+    // Добавление/обновление игрока
+    function updatePlayer() {
+        if (!gameState) return;
+        
+        const existingIndex = gameState.players.findIndex(p => p.id === playerId);
+        const playerData = {
+            id: playerId,
+            name: playerName,
+            is_host: isHost,
+            card: generateCard(),
+            revealed: false,
+            eliminated: false,
+            voted: false,
+            number: existingIndex !== -1 ? gameState.players[existingIndex].number : gameState.players.length + 1
+        };
+        
+        if (existingIndex !== -1) {
+            // Сохраняем карту если уже была (чтобы не менялась)
+            if (gameState.players[existingIndex].card) {
+                playerData.card = gameState.players[existingIndex].card;
+            }
+            gameState.players[existingIndex] = playerData;
+        } else {
+            playerData.number = gameState.players.length + 1;
+            gameState.players.push(playerData);
+        }
+        
+        saveGameState();
+    }
+    
+    function removeDisconnectedPlayers() {
+        // Удаляем игроков, которые давно не обновлялись (просто для чистоты)
+        // В этой версии не удаляем автоматически
+    }
+    
+    function renderGame() {
+        if (!gameState) return;
+        
+        // Обновляем список игроков
+        const playersHtml = gameState.players.map(p => `
+            <div class="player-item">
+                <span class="player-name">🎮 Игрок ${p.number}: ${escapeHtml(p.name)} ${p.is_host ? '👑' : ''}</span>
+                <span class="player-status">
+                    ${p.revealed ? '🔓 карта раскрыта' : '🔒 скрыта'}
+                    ${p.eliminated ? ' ❌ ВЫБЫЛ' : ''}
+                </span>
+            </div>
+        `).join("");
+        document.getElementById("playersList").innerHTML = playersHtml || "<div class='loading'>Нет игроков</div>";
+        
+        const currentPlayer = gameState.players.find(p => p.id === playerId);
+        const activePlayers = gameState.players.filter(p => !p.eliminated);
+        
+        // Фаза игры
+        const phaseDiv = document.getElementById("phaseDisplay");
+        const gameInfoDiv = document.getElementById("gameInfo");
+        const actionArea = document.getElementById("actionArea");
+        const hostArea = document.getElementById("hostArea");
+        
+        switch(gameState.phase) {
+            case "waiting":
+                phaseDiv.innerHTML = `⏳ ОЖИДАНИЕ ИГРОКОВ (${gameState.players.length}/10)`;
+                gameInfoDiv.innerHTML = "";
+                actionArea.innerHTML = "";
+                
+                if (isHost && gameState.players.length >= 2) {
+                    hostArea.innerHTML = `<button id="startGameBtn" class="success">🚀 НАЧАТЬ ИГРУ</button>`;
+                    document.getElementById("startGameBtn")?.addEventListener("click", startGame);
+                } else {
+                    hostArea.innerHTML = "";
+                }
+                break;
+                
+            case "revealing":
+                const currentTurnPlayer = gameState.players[gameState.currentTurn];
+                phaseDiv.innerHTML = `🎭 РАСКРЫТИЕ КАРТ`;
+                gameInfoDiv.innerHTML = `
+                    <div class="current-turn">
+                        🔥 СЕЙЧАС ХОД: Игрок ${currentTurnPlayer?.number || "?"} (${currentTurnPlayer?.name || "?"})<br>
+                        🌍 ${gameState.situation}<br>
+                        🏚️ ${gameState.bunker}
+                    </div>
+                `;
+                
+                if (currentPlayer && !currentPlayer.eliminated && !currentPlayer.revealed && currentTurnPlayer?.id === playerId) {
+                    actionArea.innerHTML = `<button id="revealBtn" class="success">🔓 РАСКРЫТЬ МОЮ КАРТУ</button>`;
+                    document.getElementById("revealBtn")?.addEventListener("click", revealCard);
+                } else if (currentPlayer?.revealed) {
+                    actionArea.innerHTML = `<div style="text-align:center; color:#8bc48b;">✅ Ваша карта раскрыта</div>`;
+                } else {
+                    actionArea.innerHTML = `<div style="text-align:center; color:#aa8866;">⏳ Ожидайте свой ход</div>`;
+                }
+                hostArea.innerHTML = "";
+                break;
+                
+            case "voting":
+                phaseDiv.innerHTML = `🗳️ ГОЛОСОВАНИЕ`;
+                gameInfoDiv.innerHTML = `<div style="text-align:center;">Выберите, кто НЕ попадёт в бункер</div>`;
+                
+                if (currentPlayer && !currentPlayer.eliminated && !currentPlayer.voted) {
+                    const voteButtons = activePlayers.filter(p => !p.eliminated && p.id !== playerId).map(p => 
+                        `<button class="vote-btn" onclick="voteFor('${p.id}')">🗳️ Игрок ${p.number}: ${escapeHtml(p.name)}</button>`
+                    ).join("");
+                    actionArea.innerHTML = `<div class="vote-buttons">${voteButtons}</div>`;
+                } else if (currentPlayer?.voted) {
+                    actionArea.innerHTML = `<div style="text-align:center;">✅ Вы проголосовали</div>`;
+                } else {
+                    actionArea.innerHTML = `<div style="text-align:center;">⏳ Ожидание</div>`;
+                }
+                
+                if (isHost && Object.keys(gameState.votes).length === activePlayers.length && activePlayers.length > 0) {
+                    hostArea.innerHTML = `<button id="resolveVoteBtn" class="danger">⚡ ЗАВЕРШИТЬ ГОЛОСОВАНИЕ</button>`;
+                    document.getElementById("resolveVoteBtn")?.addEventListener("click", resolveVote);
+                } else {
+                    hostArea.innerHTML = "";
+                }
+                break;
+                
+            case "game_over":
+                const winner = gameState.players.find(p => !p.eliminated);
+                phaseDiv.innerHTML = `🏆 ИГРА ОКОНЧЕНА 🏆`;
+                gameInfoDiv.innerHTML = `<div class="winner">Победитель: ${winner ? escapeHtml(winner.name) : "?"}<br><button id="newGameBtn" class="success" style="margin-top:12px;">🔄 НОВАЯ ИГРА</button></div>`;
+                actionArea.innerHTML = "";
+                hostArea.innerHTML = "";
+                document.getElementById("newGameBtn")?.addEventListener("click", resetGame);
+                break;
+        }
+        
+        // Отображение своей карты
+        const myCardDiv = document.getElementById("myCardArea");
+        if (currentPlayer && currentPlayer.card) {
+            if (currentPlayer.revealed || gameState.phase === "game_over") {
+                myCardDiv.innerHTML = `
+                    <div class="my-card">
+                        <div class="card-field"><div class="card-label">ПРОФЕССИЯ</div><div class="card-value">${escapeHtml(currentPlayer.card.profession)}</div></div>
+                        <div class="card-field"><div class="card-label">ВОЗРАСТ</div><div class="card-value">${currentPlayer.card.age} лет</div></div>
+                        <div class="card-field"><div class="card-label">ЗДОРОВЬЕ</div><div class="card-value">${escapeHtml(currentPlayer.card.health)}</div></div>
+                        <div class="card-field"><div class="card-label">ХАРАКТЕР</div><div class="card-value">${escapeHtml(currentPlayer.card.trait)}</div></div>
+                        <div class="card-field"><div class="card-label">ХОББИ</div><div class="card-value">${escapeHtml(currentPlayer.card.hobby)}</div></div>
+                        <div class="card-field"><div class="card-label">БИОГРАФИЯ</div><div class="card-value">${escapeHtml(currentPlayer.card.bio)}</div></div>
+                    </div>
+                `;
+            } else {
+                myCardDiv.innerHTML = `<div class="hidden-card">🔒 КАРТА СКРЫТА 🔒<br>Дождитесь своего хода</div>`;
+            }
+        } else {
+            myCardDiv.innerHTML = `<div class="hidden-card">⏳ Загрузка...</div>`;
+        }
+    }
+    
+    function startGame() {
+        if (!isHost) return;
+        
+        const situations = ["Ядерная зима","Зомби-апокалипсис","Падение астероида","Эпидемия","ИИ восстал","Солнечная вспышка","Наводнение","Радиация","Гражданская война","Кислотные дожди"];
+        const bunkers = ["Военный бункер","Научный комплекс","Заброшенная шахта","Секретная база","Био-купол","Арктическая станция","Бункер миллиардера","Подводная лодка"];
+        
+        gameState.phase = "revealing";
+        gameState.currentTurn = 0;
+        gameState.situation = situations[Math.floor(Math.random() * situations.length)];
+        gameState.bunker = bunkers[Math.floor(Math.random() * bunkers.length)];
+        gameState.votes = {};
+        
+        gameState.players.forEach(p => {
+            p.revealed = false;
+            p.voted = false;
+        });
+        
+        saveGameState();
+        renderGame();
+    }
+    
+    function revealCard() {
+        const currentPlayer = gameState.players.find(p => p.id === playerId);
+        const currentTurnPlayer = gameState.players[gameState.currentTurn];
+        
+        if (!currentPlayer || currentPlayer.revealed || currentTurnPlayer?.id !== playerId) {
+            alert("Сейчас не ваш ход!");
+            return;
+        }
+        
+        currentPlayer.revealed = true;
+        
+        // Следующий ход
+        let nextTurn = gameState.currentTurn + 1;
+        while (nextTurn < gameState.players.length && (gameState.players[nextTurn].eliminated || gameState.players[nextTurn].revealed)) {
+            nextTurn++;
+        }
+        
+        if (nextTurn >= gameState.players.length) {
+            gameState.phase = "voting";
+            gameState.votes = {};
+            gameState.players.forEach(p => {
+                if (!p.eliminated) p.voted = false;
+            });
+        } else {
+            gameState.currentTurn = nextTurn;
+        }
+        
+        saveGameState();
+        renderGame();
+    }
+    
+    window.voteFor = function(votedPlayerId) {
+        const currentPlayer = gameState.players.find(p => p.id === playerId);
+        if (!currentPlayer || currentPlayer.eliminated || currentPlayer.voted) {
+            alert("Вы не можете голосовать");
+            return;
+        }
+        
+        gameState.votes[playerId] = votedPlayerId;
+        currentPlayer.voted = true;
+        
+        saveGameState();
+        renderGame();
+    };
+    
+    function resolveVote() {
+        if (!isHost) return;
+        
+        const voteCount = {};
+        for (const [voterId, votedId] of Object.entries(gameState.votes)) {
+            voteCount[votedId] = (voteCount[votedId] || 0) + 1;
+        }
+        
+        let maxVotes = 0;
+        let eliminatedId = null;
+        for (const [id, count] of Object.entries(voteCount)) {
+            if (count > maxVotes) {
+                maxVotes = count;
+                eliminatedId = id;
+            }
+        }
+        
+        const eliminatedPlayer = gameState.players.find(p => p.id === eliminatedId);
+        if (eliminatedPlayer) {
+            eliminatedPlayer.eliminated = true;
+            alert(`🚫 Игрок ${eliminatedPlayer.number} (${eliminatedPlayer.name}) выбывает!`);
+        }
+        
+        const activePlayers = gameState.players.filter(p => !p.eliminated);
+        
+        if (activePlayers.length <= 2) {
+            gameState.phase = "game_over";
+        } else {
+            const situations = ["Ядерная зима","Зомби-апокалипсис","Падение астероида","Эпидемия","ИИ восстал","Солнечная вспышка","Наводнение","Радиация","Гражданская война"];
+            const bunkers = ["Военный бункер","Научный комплекс","Заброшенная шахта","Секретная база","Био-купол","Арктическая станция","Бункер миллиардера"];
+            
+            gameState.phase = "revealing";
+            gameState.currentTurn = 0;
+            gameState.votes = {};
+            gameState.situation = situations[Math.floor(Math.random() * situations.length)];
+            gameState.bunker = bunkers[Math.floor(Math.random() * bunkers.length)];
+            
+            gameState.players.forEach(p => {
+                if (!p.eliminated) {
+                    p.revealed = false;
+                    p.voted = false;
+                }
+            });
+            
+            while (gameState.currentTurn < gameState.players.length && (gameState.players[gameState.currentTurn].eliminated || gameState.players[gameState.currentTurn].revealed)) {
+                gameState.currentTurn++;
+            }
+        }
+        
+        saveGameState();
+        renderGame();
+    }
+    
+    function resetGame() {
+        if (!isHost) return;
+        
+        const situations = ["Ядерная зима","Зомби-апокалипсис","Падение астероида","Эпидемия","ИИ восстал","Солнечная вспышка","Наводнение","Радиация","Гражданская война"];
+        const bunkers = ["Военный бункер","Научный комплекс","Заброшенная шахта","Секретная база","Био-купол","Арктическая станция","Бункер миллиардера"];
+        
+        gameState.players.forEach(p => {
+            p.revealed = false;
+            p.eliminated = false;
+            p.voted = false;
+            p.card = generateCard();
+        });
+        
+        gameState.phase = "waiting";
+        gameState.currentTurn = 0;
+        gameState.situation = situations[Math.floor(Math.random() * situations.length)];
+        gameState.bunker = bunkers[Math.floor(Math.random() * bunkers.length)];
+        gameState.votes = {};
+        
+        saveGameState();
+        renderGame();
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // Синхронизация между устройствами
+    function startSync() {
+        if (syncInterval) clearInterval(syncInterval);
+        
+        // Загружаем сохранённое состояние
+        const saved = loadGameState();
+        if (saved) {
+            gameState = saved;
+        } else {
+            gameState = initGameState();
+        }
+        
+        // Добавляем/обновляем текущего игрока
+        updatePlayer();
+        
+        // Слушаем BroadcastChannel для синхронизации
+        if (window.BroadcastChannel) {
+            const channel = new BroadcastChannel(`bunker_${roomId}`);
+            channel.onmessage = (event) => {
+                if (event.data.type === 'update') {
+                    gameState = event.data.state;
+                    saveGameState();
+                    renderGame();
+                }
+            };
+        }
+        
+        // Периодическая синхронизация
+        syncInterval = setInterval(() => {
+            const saved = loadGameState();
+            if (saved && JSON.stringify(saved) !== JSON.stringify(gameState)) {
+                gameState = saved;
+                renderGame();
+            }
+            updatePlayer();
+        }, 2000);
+        
+        renderGame();
+    }
+    
+    // Создание комнаты
+    function createRoom() {
+        const name = document.getElementById("playerNameInput").value.trim();
+        let room = document.getElementById("roomIdInput").value.trim();
+        
+        if (!name) {
+            alert("Введите ваше имя");
+            return;
+        }
+        
+        if (!room) {
+            room = Math.floor(100000 + Math.random() * 900000).toString();
+        }
+        
+        roomId = room;
+        playerName = name;
+        playerId = generateId();
+        isHost = true;
+        
+        document.getElementById("roomIdDisplay").innerText = roomId;
+        document.getElementById("joinScreen").style.display = "none";
+        document.getElementById("gameScreen").style.display = "block";
+        document.getElementById("hostBadge").style.display = "inline-block";
+        
+        startSync();
+    }
+    
+    // Присоединение к комнате
+    function joinRoom() {
+        const name = document.getElementById("playerNameInput").value.trim();
+        const room = document.getElementById("roomIdInput").value.trim();
+        
+        if (!name) {
+            alert("Введите ваше имя");
+            return;
+        }
+        
+        if (!room) {
+            alert("Введите код комнаты");
+            return;
+        }
+        
+        roomId = room;
+        playerName = name;
+        playerId = generateId();
+        isHost = false;
+        
+        document.getElementById("roomIdDisplay").innerText = roomId;
+        document.getElementById("joinScreen").style.display = "none";
+        document.getElementById("gameScreen").style.display = "block";
+        document.getElementById("hostBadge").style.display = "none";
+        
+        startSync();
+    }
+    
+    // Обработчики кнопок
+    document.getElementById("createRoomBtn").addEventListener("click", createRoom);
+    document.getElementById("joinRoomBtn").addEventListener("click", joinRoom);
+    
+    // Очистка интервала при закрытии
+    window.addEventListener("beforeunload", () => {
+        if (syncInterval) clearInterval(syncInterval);
+    });
+</script>
+</body>
+</html>
