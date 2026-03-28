@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Бункер - Официальная версия</title>
+    <title>Бункер - Мультиплеер</title>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -25,34 +26,34 @@
         h2 { color: #ffd966; font-size: 1.2rem; margin-bottom: 12px; border-left: 3px solid #ffd966; padding-left: 12px; }
         .flex { display: flex; gap: 10px; flex-wrap: wrap; }
         button {
-            padding: 10px 16px;
+            padding: 12px 20px;
             border-radius: 40px;
             border: none;
             font-weight: bold;
             cursor: pointer;
             background: #4a6b5c;
             color: white;
-            font-size: 0.9rem;
-            transition: 0.05s linear;
+            font-size: 1rem;
+            width: 100%;
         }
         button:active { transform: scale(0.97); }
         button.success { background: #3c8c6e; }
         button.danger { background: #8b5a4a; }
-        button.special { background: #9b59b6; }
         input {
-            padding: 10px 16px;
+            padding: 12px 16px;
             border-radius: 40px;
             border: none;
             background: #2a3a32;
             color: white;
             width: 100%;
-            margin: 5px 0;
+            margin: 8px 0;
+            font-size: 1rem;
         }
         .player-item {
             background: #2a3a32;
             border-radius: 20px;
-            padding: 10px 15px;
-            margin: 6px 0;
+            padding: 12px 15px;
+            margin: 8px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -76,10 +77,17 @@
             border-radius: 16px;
         }
         .resource-value { font-size: 1.2rem; font-weight: bold; color: #ffd966; }
-        .current-turn { animation: pulse 1s infinite; background: #3a5a4a; padding: 12px; border-radius: 30px; text-align: center; font-weight: bold; }
+        .current-turn {
+            animation: pulse 1s infinite;
+            background: #3a5a4a;
+            padding: 12px;
+            border-radius: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
         @keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
         .status { text-align: center; padding: 12px; background: #2a3a32; border-radius: 40px; margin-bottom: 12px; }
-        .players-list { background: #1f2a24; border-radius: 20px; padding: 12px; max-height: 280px; overflow-y: auto; }
+        .players-list { background: #1f2a24; border-radius: 20px; padding: 12px; max-height: 300px; overflow-y: auto; }
         .my-card {
             background: #2c4238;
             border-radius: 24px;
@@ -93,14 +101,12 @@
             background: #1e2e28;
             border-radius: 20px;
             cursor: pointer;
-            transition: 0.1s;
         }
         .card-field:hover { background: #2a4a3a; }
         .card-label {
             font-size: 0.65rem;
             color: #9abf8a;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
         .card-value {
             font-size: 1rem;
@@ -127,7 +133,7 @@
         .host-badge { background: #ffaa44; padding: 4px 12px; border-radius: 30px; display: inline-block; margin-bottom: 10px; color: #2a3a2a; font-weight: bold; }
         .game-code { background: #0f1713; padding: 12px; border-radius: 20px; text-align: center; margin-bottom: 16px; }
         .game-code span { font-size: 1.8rem; font-weight: bold; color: #ffd966; letter-spacing: 4px; }
-        .stepper { display: flex; align-items: center; gap: 12px; background: #2a3a32; padding: 5px 12px; border-radius: 40px; }
+        .stepper { display: flex; align-items: center; gap: 12px; background: #2a3a32; padding: 5px 12px; border-radius: 40px; justify-content: center; }
         .small-text { font-size: 0.65rem; color: #8aa68f; text-align: center; margin-top: 12px; }
         .reveal-options {
             display: grid;
@@ -144,7 +150,6 @@
             cursor: pointer;
         }
         .reveal-option:active { background: #3a5a4a; }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -152,13 +157,13 @@
     <!-- Экран входа -->
     <div id="joinScreen" class="card">
         <h1>🏚️ БУНКЕР</h1>
-        <p style="text-align:center; color:#b8d9a8; margin-bottom:15px;">Классическая версия</p>
+        <p style="text-align:center; color:#b8d9a8; margin-bottom:15px;">Мультиплеерная версия</p>
         
-        <div class="flex" style="margin-bottom:15px;">
-            <div class="stepper" style="flex:1">
-                <button id="decPlayers">-</button>
+        <div class="flex" style="margin-bottom:15px; justify-content: center;">
+            <div class="stepper">
+                <button id="decPlayers" style="width: 50px;">-</button>
                 <span id="targetPlayersCount">4</span>
-                <button id="incPlayers">+</button>
+                <button id="incPlayers" style="width: 50px;">+</button>
                 <span style="margin-left:8px;">игроков</span>
             </div>
         </div>
@@ -172,9 +177,9 @@
         </div>
         
         <div class="small-text">
-            📜 У каждого игрока 11 характеристик<br>
-            🎭 В свой ход вы открываете ТОЛЬКО ОДНУ характеристику<br>
-            🔒 Остальные остаются скрытыми до следующего хода<br>
+            🌐 РАБОЧИЙ МУЛЬТИПЛЕЕР!<br>
+            📱 Каждый игрок заходит с СВОЕГО телефона по одной ссылке<br>
+            🎭 В свой ход выбираете, какую характеристику раскрыть<br>
             👑 Ведущий управляет началом игры и голосованием
         </div>
     </div>
@@ -208,29 +213,13 @@
 </div>
 
 <script>
-    // ============== БАЗА ДАННЫХ ==============
-    const GENDERS = ["Мужчина", "Женщина"];
-    const BODY_TYPES = ["Атлетическое", "Худощавое", "Крепкое", "Хрупкое", "Мускулистое"];
-    const PERSONALITY = ["Добрый", "Харизматичный", "Замкнутый", "Весёлый", "Серьёзный", "Эгоистичный", "Альтруист", "Оптимист", "Спокойный", "Импульсивный"];
-    const PROFESSIONS = ["Инженер", "Врач", "Военный", "Агроном", "Электрик", "Психолог", "Биолог", "Повар", "Строитель", "Механик", "Охотник", "Спасатель", "Пожарный", "Священник", "Фермер", "Сапёр", "Кузнец", "Ветеринар", "Пилот", "Учитель"];
-    const HEALTHS = ["Здоров", "Аллергия", "Астматик", "Диабет", "Гипертония", "Мигрень", "Бессонница", "Проблемы со спиной"];
-    const HOBBIES = ["Шахматы", "Гитара", "Рыбалка", "Охота", "Кулинария", "Садоводство", "Походы", "Столярка", "Рисование", "Йога", "Стрельба", "Книги"];
-    const PHOBIAS = ["Клаустрофобия", "Акрофобия", "Социофобия", "Арахнофобия", "Никтофобия", "Агорафобия", "Гемофобия", "Танатофобия"];
-    const BIG_INVENTORY = ["Автомобиль", "Мотоцикл", "Генератор", "Холодильник", "Сейф", "Компьютер", "Велосипед", "Лодка"];
-    const BACKPACK = ["Палатка", "Спальник", "Аптечка", "Нож", "Фонарик", "Консервы", "Вода", "Спички", "Верёвка", "Топор", "Радио", "Компас"];
-    const EXTRA_INFO = ["Знает языки", "Умеет водить танк", "Был в тюрьме", "Имеет связи", "Скрывает прошлое", "Был миллионером", "Имеет тайник", "Знает секрет бункера"];
+    let socket = null;
+    let roomCode = null;
+    let playerId = null;
+    let gameState = null;
+    let isHost = false;
+    let targetPlayerCount = 4;
     
-    // Спецвозможности (только для некоторых профессий)
-    const SPECIAL_ABILITIES = {
-        "Уборщик": "Может выбросить чужой инвентарь",
-        "Вор": "Может украсть предмет",
-        "Врач": "Может вылечить болезнь",
-        "Инженер": "Может починить оборудование",
-        "Повар": "Может удвоить еду",
-        "Полицейский": "Может обыскать игрока"
-    };
-    
-    // Список характеристик
     const CHARACTERISTICS = [
         { key: "genderAge", label: "ПОЛ, ВОЗРАСТ", icon: "👤" },
         { key: "bodyType", label: "ТЕЛОСЛОЖЕНИЕ", icon: "💪" },
@@ -245,143 +234,6 @@
         { key: "specialAbility", label: "СПЕЦВОЗМОЖНОСТЬ", icon: "✨" }
     ];
     
-    function generateCard() {
-        const gender = GENDERS[Math.floor(Math.random() * GENDERS.length)];
-        const age = Math.floor(Math.random() * 54) + 16;
-        const profession = PROFESSIONS[Math.floor(Math.random() * PROFESSIONS.length)];
-        const specialAbility = SPECIAL_ABILITIES[profession] || "Нет специальных возможностей";
-        
-        const card = {
-            genderAge: `${gender}, ${age} лет`,
-            bodyType: BODY_TYPES[Math.floor(Math.random() * BODY_TYPES.length)],
-            personality: PERSONALITY[Math.floor(Math.random() * PERSONALITY.length)],
-            profession: profession,
-            health: HEALTHS[Math.floor(Math.random() * HEALTHS.length)],
-            hobby: HOBBIES[Math.floor(Math.random() * HOBBIES.length)],
-            phobia: PHOBIAS[Math.floor(Math.random() * PHOBIAS.length)],
-            bigInventory: BIG_INVENTORY[Math.floor(Math.random() * BIG_INVENTORY.length)],
-            backpack: BACKPACK[Math.floor(Math.random() * BACKPACK.length)],
-            extraInfo: EXTRA_INFO[Math.floor(Math.random() * EXTRA_INFO.length)],
-            specialAbility: specialAbility
-        };
-        
-        // Инициализация раскрытых характеристик
-        const revealed = {};
-        for (let c of CHARACTERISTICS) revealed[c.key] = false;
-        
-        return { card, revealed };
-    }
-    
-    function generateResources() {
-        return {
-            beds: Math.floor(Math.random() * 8) + 3,
-            food: Math.floor(Math.random() * 24) + 6,
-            water: Math.floor(Math.random() * 24) + 6,
-            medkits: Math.floor(Math.random() * 8) + 1
-        };
-    }
-    
-    // ============== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==============
-    let roomId = null;
-    let playerId = null;
-    let playerName = null;
-    let isHost = false;
-    let syncInterval = null;
-    let gameState = null;
-    let targetPlayerCount = 4;
-    
-    // ============== ФУНКЦИИ СИНХРОНИЗАЦИИ ==============
-    function generateId() {
-        return Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-    }
-    
-    function saveGameState() {
-        if (!roomId || !gameState) return;
-        const key = `bunker_${roomId}`;
-        const toSave = {
-            players: gameState.players.map(p => ({
-                id: p.id,
-                name: p.name,
-                is_host: p.is_host,
-                number: p.number,
-                eliminated: p.eliminated,
-                revealed: p.revealed,
-                voted: p.voted,
-                card: p.card,
-                revealedChars: p.revealedChars
-            })),
-            phase: gameState.phase,
-            currentTurn: gameState.currentTurn,
-            situation: gameState.situation,
-            bunker: gameState.bunker,
-            resources: gameState.resources,
-            votes: gameState.votes,
-            maxPlayers: gameState.maxPlayers
-        };
-        localStorage.setItem(key, JSON.stringify(toSave));
-        
-        if (window.BroadcastChannel) {
-            const channel = new BroadcastChannel(`bunker_${roomId}`);
-            channel.postMessage({ type: 'update', state: toSave });
-            setTimeout(() => channel.close(), 100);
-        }
-    }
-    
-    function loadGameState() {
-        if (!roomId) return null;
-        const key = `bunker_${roomId}`;
-        const saved = localStorage.getItem(key);
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch(e) {}
-        }
-        return null;
-    }
-    
-    function initGameState() {
-        const situations = ["Ядерная зима", "Зомби-апокалипсис", "Падение астероида", "Эпидемия", "ИИ восстал", "Солнечная вспышка", "Наводнение", "Радиация", "Гражданская война"];
-        const bunkers = ["Военный бункер", "Научный комплекс", "Заброшенная шахта", "Секретная база", "Био-купол", "Арктическая станция", "Бункер миллиардера", "Подводная лодка"];
-        
-        return {
-            players: [],
-            phase: "waiting",
-            currentTurn: 0,
-            situation: situations[Math.floor(Math.random() * situations.length)],
-            bunker: bunkers[Math.floor(Math.random() * bunkers.length)],
-            resources: generateResources(),
-            maxPlayers: targetPlayerCount,
-            votes: {}
-        };
-    }
-    
-    function updatePlayer() {
-        if (!gameState) return;
-        
-        const existingIndex = gameState.players.findIndex(p => p.id === playerId);
-        const newCard = generateCard();
-        
-        if (existingIndex === -1) {
-            if (gameState.players.length >= gameState.maxPlayers) {
-                alert("Комната заполнена!");
-                return;
-            }
-            gameState.players.push({
-                id: playerId,
-                name: playerName,
-                is_host: isHost,
-                number: gameState.players.length + 1,
-                eliminated: false,
-                revealed: false,
-                voted: false,
-                card: newCard.card,
-                revealedChars: newCard.revealed
-            });
-        }
-        saveGameState();
-    }
-    
-    // ============== ОТОБРАЖЕНИЕ ==============
     function escapeHtml(str) {
         if (!str) return "";
         return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
@@ -390,20 +242,17 @@
     function renderGame() {
         if (!gameState) return;
         
-        // Обновляем счётчики
         document.getElementById("currentPlayersCount").innerText = gameState.players.length;
         document.getElementById("maxPlayersCount").innerText = gameState.maxPlayers;
         
-        // Список игроков (без лишней информации)
         const playersHtml = gameState.players.map(p => `
             <div class="player-item">
-                <span class="player-name">🎮 Игрок ${p.number}: ${escapeHtml(p.name)} ${p.is_host ? '👑' : ''}</span>
-                <span class="player-status">${p.eliminated ? '❌ ВЫБЫЛ' : (p.revealed ? '✅ все раскрыто' : '🔒 в игре')}</span>
+                <span class="player-name">🎮 Игрок ${p.number}: ${escapeHtml(p.name)} ${p.isHost ? '👑' : ''}</span>
+                <span class="player-status">${p.eliminated ? '❌ ВЫБЫЛ' : (p.revealed ? '✅ всё раскрыто' : '🔒 в игре')}</span>
             </div>
         `).join("");
         document.getElementById("playersList").innerHTML = playersHtml || "<div>Нет игроков</div>";
         
-        // Ресурсы
         if (gameState.resources) {
             const r = gameState.resources;
             document.getElementById("resourcesPanel").innerHTML = `
@@ -418,7 +267,6 @@
         const activePlayers = gameState.players.filter(p => !p.eliminated);
         const turnPlayer = gameState.players[gameState.currentTurn];
         
-        // Фаза игры
         if (gameState.phase === "waiting") {
             document.getElementById("phaseDisplay").innerHTML = `⏳ ОЖИДАНИЕ (${gameState.players.length}/${gameState.maxPlayers})`;
             document.getElementById("gameInfo").innerHTML = "";
@@ -427,17 +275,7 @@
             if (isHost && gameState.players.length === gameState.maxPlayers) {
                 document.getElementById("hostArea").innerHTML = `<button id="startBtn" class="success">🚀 НАЧАТЬ ИГРУ</button>`;
                 const startBtn = document.getElementById("startBtn");
-                if (startBtn) startBtn.onclick = () => {
-                    gameState.phase = "revealing";
-                    gameState.currentTurn = 0;
-                    gameState.votes = {};
-                    gameState.players.forEach(p => {
-                        p.revealed = false;
-                        p.voted = false;
-                    });
-                    saveGameState();
-                    renderGame();
-                };
+                if (startBtn) startBtn.onclick = () => socket.emit('start_game', { roomCode });
             } else {
                 document.getElementById("hostArea").innerHTML = "";
             }
@@ -446,24 +284,11 @@
             document.getElementById("phaseDisplay").innerHTML = `<div class="current-turn">🎭 ХОДИТ: Игрок ${turnPlayer?.number} (${turnPlayer?.name})</div>`;
             document.getElementById("gameInfo").innerHTML = `<div style="margin-top:8px;">🌍 ${gameState.situation}<br>🏚️ ${gameState.bunker}</div>`;
             
-            // Если ход текущего игрока
             if (currentPlayer && !currentPlayer.eliminated && turnPlayer?.id === playerId && !currentPlayer.revealed) {
                 const revealedCount = Object.values(currentPlayer.revealedChars || {}).filter(v => v === true).length;
                 
                 if (revealedCount >= CHARACTERISTICS.length) {
-                    // Все характеристики раскрыты
-                    currentPlayer.revealed = true;
-                    let next = gameState.currentTurn + 1;
-                    while (next < gameState.players.length && (gameState.players[next].eliminated)) next++;
-                    if (next >= gameState.players.length) {
-                        gameState.phase = "voting";
-                        gameState.votes = {};
-                        gameState.players.forEach(p => { if (!p.eliminated) p.voted = false; });
-                    } else {
-                        gameState.currentTurn = next;
-                    }
-                    saveGameState();
-                    renderGame();
+                    document.getElementById("actionArea").innerHTML = "<div>✅ Все характеристики раскрыты!</div>";
                 } else {
                     const notRevealed = CHARACTERISTICS.filter(c => !currentPlayer.revealedChars[c.key]);
                     let optionsHtml = `<div style="margin-top:12px;"><strong>📜 Выберите характеристику для раскрытия:</strong></div><div class="reveal-options">`;
@@ -476,19 +301,7 @@
                     document.querySelectorAll(".reveal-option").forEach(btn => {
                         btn.onclick = () => {
                             const key = btn.dataset.key;
-                            currentPlayer.revealedChars[key] = true;
-                            
-                            let next = gameState.currentTurn + 1;
-                            while (next < gameState.players.length && (gameState.players[next].eliminated)) next++;
-                            if (next >= gameState.players.length) {
-                                gameState.phase = "voting";
-                                gameState.votes = {};
-                                gameState.players.forEach(p => { if (!p.eliminated) p.voted = false; });
-                            } else {
-                                gameState.currentTurn = next;
-                            }
-                            saveGameState();
-                            renderGame();
+                            socket.emit('reveal_char', { roomCode, charKey: key });
                         };
                     });
                 }
@@ -513,7 +326,7 @@
             if (isHost && Object.keys(gameState.votes).length === activePlayers.length && activePlayers.length > 0) {
                 document.getElementById("hostArea").innerHTML = `<button id="resolveBtn" class="danger">⚡ ЗАВЕРШИТЬ ГОЛОСОВАНИЕ</button>`;
                 const resolveBtn = document.getElementById("resolveBtn");
-                if (resolveBtn) resolveBtn.onclick = resolveVote;
+                if (resolveBtn) resolveBtn.onclick = () => socket.emit('resolve_vote', { roomCode });
             } else {
                 document.getElementById("hostArea").innerHTML = "";
             }
@@ -525,10 +338,9 @@
             document.getElementById("actionArea").innerHTML = "";
             document.getElementById("hostArea").innerHTML = "";
             const newGameBtn = document.getElementById("newGameBtn");
-            if (newGameBtn) newGameBtn.onclick = resetGame;
+            if (newGameBtn) newGameBtn.onclick = () => location.reload();
         }
         
-        // Отображение СВОЕЙ карты
         const myCardDiv = document.getElementById("myCardArea");
         if (currentPlayer && currentPlayer.card) {
             let html = `<div class="my-card">`;
@@ -552,154 +364,47 @@
         }
     }
     
-    window.voteFor = function(votedId) {
-        const p = gameState.players.find(p => p.id === playerId);
-        if (!p || p.eliminated || p.voted) return;
-        gameState.votes[playerId] = votedId;
-        p.voted = true;
-        saveGameState();
-        renderGame();
+    window.voteFor = function(votedPlayerId) {
+        socket.emit('vote', { roomCode, votedPlayerId });
     };
     
-    function resolveVote() {
-        if (!isHost) return;
+    function connectToServer() {
+        socket = io();
         
-        const voteCount = {};
-        for (let [, votedId] of Object.entries(gameState.votes)) {
-            voteCount[votedId] = (voteCount[votedId] || 0) + 1;
-        }
+        socket.on('connect', () => {
+            console.log('Подключено к серверу');
+        });
         
-        let maxVotes = 0;
-        let eliminatedId = null;
-        for (let [id, count] of Object.entries(voteCount)) {
-            if (count > maxVotes) {
-                maxVotes = count;
-                eliminatedId = id;
-            }
-        }
-        
-        const eliminated = gameState.players.find(p => p.id === eliminatedId);
-        if (eliminated) {
-            eliminated.eliminated = true;
-            alert(`🚫 Игрок ${eliminated.number} (${eliminated.name}) выбывает!`);
-        }
-        
-        const active = gameState.players.filter(p => !p.eliminated);
-        
-        if (active.length <= 2) {
-            gameState.phase = "game_over";
-        } else {
-            const situations = ["Ядерная зима", "Зомби-апокалипсис", "Падение астероида", "Эпидемия", "ИИ восстал", "Солнечная вспышка", "Наводнение", "Радиация"];
-            const bunkers = ["Военный бункер", "Научный комплекс", "Заброшенная шахта", "Секретная база", "Био-купол", "Арктическая станция"];
-            
-            gameState.phase = "revealing";
-            gameState.currentTurn = 0;
-            gameState.votes = {};
-            gameState.situation = situations[Math.floor(Math.random() * situations.length)];
-            gameState.bunker = bunkers[Math.floor(Math.random() * bunkers.length)];
-            gameState.resources = generateResources();
-            
-            gameState.players.forEach(p => {
-                if (!p.eliminated) {
-                    p.revealed = false;
-                    p.voted = false;
-                    if (p.revealedChars) {
-                        for (let key of CHARACTERISTICS.map(c => c.key)) {
-                            p.revealedChars[key] = false;
-                        }
-                    }
-                }
-            });
-            
-            while (gameState.currentTurn < gameState.players.length && gameState.players[gameState.currentTurn].eliminated) {
-                gameState.currentTurn++;
-            }
-        }
-        saveGameState();
-        renderGame();
+        socket.on('game_update', (state) => {
+            gameState = state;
+            renderGame();
+        });
     }
     
-    function resetGame() {
-        if (!isHost) return;
-        
-        const situations = ["Ядерная зима", "Зомби-апокалипсис", "Падение астероида", "Эпидемия", "ИИ восстал", "Солнечная вспышка", "Наводнение", "Радиация"];
-        const bunkers = ["Военный бункер", "Научный комплекс", "Заброшенная шахта", "Секретная база", "Био-купол", "Арктическая станция"];
-        
-        for (let p of gameState.players) {
-            const newCard = generateCard();
-            p.eliminated = false;
-            p.revealed = false;
-            p.voted = false;
-            p.card = newCard.card;
-            p.revealedChars = newCard.revealed;
-        }
-        
-        gameState.phase = "waiting";
-        gameState.currentTurn = 0;
-        gameState.situation = situations[Math.floor(Math.random() * situations.length)];
-        gameState.bunker = bunkers[Math.floor(Math.random() * bunkers.length)];
-        gameState.resources = generateResources();
-        gameState.votes = {};
-        
-        saveGameState();
-        renderGame();
-    }
-    
-    function startSync() {
-        if (syncInterval) clearInterval(syncInterval);
-        
-        const saved = loadGameState();
-        if (saved) {
-            gameState = saved;
-        } else {
-            gameState = initGameState();
-        }
-        
-        updatePlayer();
-        
-        if (window.BroadcastChannel) {
-            const channel = new BroadcastChannel(`bunker_${roomId}`);
-            channel.onmessage = (event) => {
-                if (event.data.type === 'update') {
-                    gameState = event.data.state;
-                    saveGameState();
-                    renderGame();
-                }
-            };
-        }
-        
-        syncInterval = setInterval(() => {
-            const saved = loadGameState();
-            if (saved && JSON.stringify(saved) !== JSON.stringify(gameState)) {
-                gameState = saved;
-                renderGame();
-            }
-            updatePlayer();
-        }, 2000);
-        
-        renderGame();
-    }
-    
-    // ============== СОЗДАНИЕ / ПРИСОЕДИНЕНИЕ ==============
     function createRoom() {
         const name = document.getElementById("playerNameInput").value.trim();
         let room = document.getElementById("roomIdInput").value.trim();
         
         if (!name) { alert("Введите ваше имя"); return; }
-        if (!room) room = Math.floor(100000 + Math.random() * 900000).toString();
         
         targetPlayerCount = parseInt(document.getElementById("targetPlayersCount").innerText);
-        roomId = room;
-        playerName = name;
-        playerId = generateId();
-        isHost = true;
         
-        document.getElementById("roomIdDisplay").innerText = roomId;
-        document.getElementById("joinScreen").style.display = "none";
-        document.getElementById("gameScreen").style.display = "block";
-        document.getElementById("hostBadge").style.display = "inline-block";
+        connectToServer();
         
-        startSync();
+        socket.emit('create_room', { playerName: name, maxPlayers: targetPlayerCount }, (response) => {
+            if (response.success) {
+                roomCode = response.roomCode;
+                playerId = response.playerId;
+                isHost = true;
+                
+                document.getElementById("roomIdDisplay").innerText = roomCode;
+                document.getElementById("joinScreen").style.display = "none";
+                document.getElementById("gameScreen").style.display = "block";
+                document.getElementById("hostBadge").style.display = "inline-block";
+            } else {
+                alert("Ошибка создания комнаты");
+            }
+        });
     }
     
     function joinRoom() {
@@ -709,40 +414,38 @@
         if (!name) { alert("Введите ваше имя"); return; }
         if (!room) { alert("Введите код комнаты"); return; }
         
-        roomId = room;
-        playerName = name;
-        playerId = generateId();
-        isHost = false;
+        connectToServer();
         
-        document.getElementById("roomIdDisplay").innerText = roomId;
-        document.getElementById("joinScreen").style.display = "none";
-        document.getElementById("gameScreen").style.display = "block";
-        document.getElementById("hostBadge").style.display = "none";
-        
-        startSync();
+        socket.emit('join_room', { roomCode: room, playerName: name }, (response) => {
+            if (response.success) {
+                roomCode = room;
+                playerId = response.playerId;
+                isHost = false;
+                
+                document.getElementById("roomIdDisplay").innerText = roomCode;
+                document.getElementById("joinScreen").style.display = "none";
+                document.getElementById("gameScreen").style.display = "block";
+                document.getElementById("hostBadge").style.display = "none";
+            } else {
+                alert(response.error || "Ошибка подключения");
+            }
+        });
     }
     
-    // ============== ИНИЦИАЛИЗАЦИЯ ==============
     document.getElementById("decPlayers").onclick = () => {
         let v = parseInt(document.getElementById("targetPlayersCount").innerText);
         if (v > 2) v--;
         document.getElementById("targetPlayersCount").innerText = v;
-        targetPlayerCount = v;
     };
     
     document.getElementById("incPlayers").onclick = () => {
         let v = parseInt(document.getElementById("targetPlayersCount").innerText);
         if (v < 10) v++;
         document.getElementById("targetPlayersCount").innerText = v;
-        targetPlayerCount = v;
     };
     
     document.getElementById("createRoomBtn").onclick = createRoom;
     document.getElementById("joinRoomBtn").onclick = joinRoom;
-    
-    window.onbeforeunload = () => {
-        if (syncInterval) clearInterval(syncInterval);
-    };
 </script>
 </body>
 </html>
